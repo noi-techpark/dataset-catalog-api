@@ -45,6 +45,9 @@ func main() {
 	router.GET("/odps31", handlers.ODPS31GinHandler)
 	router.GET("/odps31/:uuid", handlers.ODPS31DetailGinHandler)
 
+  // Register the new /healthcheck endpoint.
+	router.GET("/healthcheck", handlers.HealthcheckHandler)
+
 	fmt.Println("Server running on :8878")
 	log.Fatal(router.Run(":8878"))
 }
