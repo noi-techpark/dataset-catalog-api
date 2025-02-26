@@ -14,6 +14,7 @@ RUN CGO_ENABLED=0 GOOS=linux go build -o main
 FROM alpine:latest AS build
 WORKDIR /app
 COPY --from=build-env /app/main .
+COPY --from=build-env /app/templates ./templates
 # Expose the port that the application listens on.
 EXPOSE 8878
 ENTRYPOINT [ "./main"]
