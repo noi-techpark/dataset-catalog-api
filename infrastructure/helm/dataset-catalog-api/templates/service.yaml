@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "dataset-catalog-api.name" . }}
+  labels:
+    {{- include "dataset-catalog-api.labels" . | nindent 4 }}
+spec:
+  selector:
+    {{- include "dataset-catalog-api.labels" . | nindent 4 }}
+  ports:
+    - name: http
+      port: {{ .Values.service.port }}
+      targetPort: http

@@ -1,0 +1,7 @@
+ingress:
+  hosts:
+    - data-catalog.opendatahub.com
+
+env:
+  BASE_URL: https://data-catalog.opendatahub.com/
+  GIN_MODE: release

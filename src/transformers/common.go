@@ -19,7 +19,7 @@ func init() {
 	}
 	baseURL := os.Getenv("BASE_URL")
 	if baseURL == "" {
-		baseURL = "https://data-catalog.opendatahub.testingmachine.eu/"
+		baseURL = "https://data-catalog.opendatahub.com/"
 	}
 	BaseURL = baseURL
 }

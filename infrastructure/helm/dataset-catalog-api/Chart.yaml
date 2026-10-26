@@ -1,0 +1,6 @@
+apiVersion: v2
+name: dataset-catalog-api
+description: Helm chart for the Open Data Hub Dataset Catalog API
+type: application
+version: 1.0.0
+appVersion: "latest"

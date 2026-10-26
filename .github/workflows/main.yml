@@ -5,58 +5,77 @@ on:
   pull_request:
 
 env:
-  PROJECT_NAME: dataset-catalog-api
-  WORKING_DIRECTORY: ./
   DOCKER_IMAGE: ghcr.io/noi-techpark/dataset-catalog-api
   DOCKER_TAG: ${{ github.sha }}
 
 jobs:
   build:
-    runs-on: ubuntu-22.04
-    concurrency: build
+    runs-on: ubuntu-24.04
+    concurrency: build-${{ github.ref }}
     steps:
-    - name: Checkout source code
-      uses: actions/checkout@v4
+      - name: Checkout source code
+        uses: actions/checkout@v4
 
-    - name: Build and push images
-      uses: noi-techpark/github-actions/docker-build-and-push@v2
-      with:
-        working-directory: ${{ env.WORKING_DIRECTORY }}/infrastructure
-        docker-username: ${{ github.actor }}
-        docker-password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build and push images
+        uses: noi-techpark/github-actions/docker-build-and-push@v2
+        with:
+          docker-username: ${{ github.actor }}
+          docker-password: ${{ secrets.GITHUB_TOKEN }}
 
   deploy-test:
     if: github.ref == 'refs/heads/main'
     needs: build
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     concurrency: deploy-test
     environment: test
     steps:
       - name: Checkout source code
-        uses: actions/checkout@v2
-      # https://github.com/shrink/actions-docker-registry-tag
-      - name: Add a "unstable" docker tag
-        uses: shrink/actions-docker-registry-tag@v4
-        with:
-          registry: ghcr.io
-          repository: noi-techpark/dataset-catalog-api
-          target: ${{ env.DOCKER_TAG }}
-          tags: |
-            unstable
+        uses: actions/checkout@v4
 
-      - name: Create .env file
-        uses: noi-techpark/github-actions/env-file@v2
-        env:
-          X_DOCKER_IMAGE: ${{ env.DOCKER_IMAGE }}
-          X_DOCKER_TAG: ${{ env.DOCKER_TAG }}
-          X_SERVER_PORT: 1006
+      - name: Customize values.yaml
+        run: |
+          yq -i '
+            .image.repository="${{ env.DOCKER_IMAGE }}" |
+            .image.tag="${{ env.DOCKER_TAG }}"
+          ' infrastructure/helm/test.yaml
 
-      - name: Deploy application
-        uses: noi-techpark/github-actions/docker-deploy@v2
+      - name: Deploy on cluster
+        uses: noi-techpark/github-actions/helm-deploy@v2
         with:
-          hosts: 'test'
-          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
-          docker-username: 'noi-techpark-bot'
-          docker-password: ${{ secrets.GH_PERSONAL_ACCESS_TOKEN }}
-          project-name: ${{ env.PROJECT_NAME }}
-    
+          k8s-name: dataset-catalog-api
+          k8s-namespace: core
+          chart-path: infrastructure/helm/dataset-catalog-api
+          values-file: infrastructure/helm/test.yaml
+          aws-access-key-id: ${{ secrets[vars.AWS_KEY_ID] }}
+          aws-secret-access-key: ${{ secrets[vars.AWS_KEY_SECRET] }}
+          aws-eks-cluster-name: aws-main-eu-01
+          aws-region: eu-west-1
+
+  deploy-prod:
+    if: github.ref == 'refs/heads/prod'
+    needs: build
+    runs-on: ubuntu-24.04
+    concurrency: deploy-prod
+    environment: prod
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+
+      - name: Customize values.yaml
+        run: |
+          yq -i '
+            .image.repository="${{ env.DOCKER_IMAGE }}" |
+            .image.tag="${{ env.DOCKER_TAG }}"
+          ' infrastructure/helm/prod.yaml
+
+      - name: Deploy on cluster
+        uses: noi-techpark/github-actions/helm-deploy@v2
+        with:
+          k8s-name: dataset-catalog-api
+          k8s-namespace: core
+          chart-path: infrastructure/helm/dataset-catalog-api
+          values-file: infrastructure/helm/prod.yaml
+          aws-access-key-id: ${{ secrets[vars.AWS_KEY_ID] }}
+          aws-secret-access-key: ${{ secrets[vars.AWS_KEY_SECRET] }}
+          aws-eks-cluster-name: aws-main-eu-01
+          aws-region: eu-west-1

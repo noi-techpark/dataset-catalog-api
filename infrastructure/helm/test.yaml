@@ -1,0 +1,7 @@
+ingress:
+  hosts:
+    - data-catalog.opendatahub.testingmachine.eu
+
+env:
+  BASE_URL: https://data-catalog.opendatahub.testingmachine.eu/
+  GIN_MODE: release

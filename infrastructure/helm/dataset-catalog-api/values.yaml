@@ -1,0 +1,15 @@
+image:
+  repository: ghcr.io/noi-techpark/dataset-catalog-api
+  pullPolicy: IfNotPresent
+  tag: latest
+
+service:
+  port: 80
+
+ingress:
+  className: nginx
+  hosts: []
+
+env: {}
+
+resources: {}
